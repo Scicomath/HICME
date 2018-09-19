@@ -369,7 +369,7 @@ void HIeB::CaleBy0(int n)
   minEta = -mY0 - 0.5;
   maxEta = mY0 + 0.5;
 
-  N = n + 1;
+  N = 100;
 
   ETA = (double *)malloc((N) * sizeof(double));
   EBY0 = (double *)malloc((N) * sizeof(double));
@@ -412,8 +412,20 @@ void HIeB::CaleBy0(int n)
     }
   }
 
-  spline_steffen = gsl_spline_alloc(gsl_interp_steffen, N);
+  gsl_interp_accel *acc = gsl_interp_accel_alloc();
+  gsl_spline *spline_steffen = gsl_spline_alloc(gsl_interp_steffen, N);
   gsl_spline_init(spline_steffen, ETA, EBY0, N);
+  for (j = 0; j < N; ++j)
+    printf("%g %g\n", ETA[j], EBY0[j]);
+  for (j = 0; j <= 100; ++j)
+    {
+      ETAA = (1 - j / 100.0) * ETA[0] + (j / 100.0) * ETA[N-1];
+      printf("%g\n", ETAA);
+      etaeB = gsl_spline_eval(spline_steffen, ETAA, acc);
+      printf("%g %g\n", ETAA, etaeB);
+    }
+  gsl_spline_free(spline_steffen);
+  gsl_interp_accel_free(acc);
 
   SetSpaceTime(x, y, z, t);
   mIseBy0cal = 1;
@@ -437,7 +449,7 @@ void HIeB::CalQGPeB()
   }
 
   double cosheta = cosh(meta);
-  eBy = mtau0 / mtau * exp(-mcs2 / (2.0 * max2) * (Sq(mtau) - Sq(mtau0)) * Sq(cosheta)) * gsl_spline_eval(spline_steffen, meta, acc);
+  eBy = (mtau0 / mtau) * exp(-mcs2 / (2.0 * max2) * (Sq(mtau) - Sq(mtau0)) * Sq(cosheta)) * etaeB;
 }
 
 double HIeB::xifun(double xp, double yp, char sign)
@@ -519,8 +531,13 @@ void HIeB::cmefun_eta()
     CaleBy0(100);
   }
 
-  Vegas(4, 1, delta_pp_eta_Int, (void *)this, nvec, epsrel, epsabs, flags, seed, mineval, maxeval, nstart, nincrease, nbatch, gridno, statefile, spin, &neval, &fail, &delta_pp, &interror, &prob);
-  Vegas(4, 1, delta_pm_eta_Int, (void *)this, nvec, epsrel, epsabs, flags, seed, mineval, maxeval, nstart, nincrease, nbatch, gridno, statefile, spin, &neval, &fail, &delta_pm, &interror, &prob);
+  Vegas(4, 1, delta_pp_eta_Int, (void *)this, nvec, epsrel, epsabs, 
+  flags, seed, mineval, maxeval, nstart, nincrease, nbatch, 
+  gridno, statefile, spin, &neval, &fail, &delta_pp, &interror, &prob);
+  Vegas(4, 1, delta_pm_eta_Int, (void *)this, nvec, 
+  epsrel, epsabs, flags, seed, mineval, maxeval, nstart,
+    nincrease, nbatch, gridno, statefile, spin, &neval, 
+    &fail, &delta_pm, &interror, &prob);
   // printf("delta_pp = %g delta_pm = %g\n", delta_pp, delta_pm);
 
   app = 1.0 / Sq(mNp) * Sq(M_PI) / 16.0 * (delta_pp);

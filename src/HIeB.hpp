@@ -3,18 +3,22 @@
 #define HIEBHPP
 
 #include <string>
+#include <gsl/gsl_errno.h>
 #include <gsl/gsl_spline.h>
 
 class HIeB
 {
 public:
   HIeB();
-  double eBx, eBy, eBz; // 重离子碰撞中产生的磁场
+  double eBx, eBy, eBz ; // 重离子碰撞中产生的磁场
   double apm, app, delta_pm, delta_pp;
   char flag; // 用来表明核运动方向的变量
 
   // 插值相关变量
+  size_t j;
   size_t N;
+  double ETAA;
+  double etaeB;
   double *ETA;
   double *EBY0;
   gsl_interp_accel *acc;
